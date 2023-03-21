@@ -4,6 +4,7 @@ import com.projetoSpring.projetoCurso.entities.User;
 import com.projetoSpring.projetoCurso.repositories.UserRepository;
 import com.projetoSpring.projetoCurso.services.exceptions.DataBaseException;
 import com.projetoSpring.projetoCurso.services.exceptions.ResourceNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -19,33 +20,37 @@ public class UserService {
     @Autowired
     private UserRepository repository;
 
-    public List<User> findAll(){
+    public List<User> findAll() {
         return repository.findAll();
     }
 
-    public User findById(long id){
+    public User findById(long id) {
         Optional<User> obj = repository.findById(id);
         return obj.orElseThrow(() -> new ResourceNotFoundException(id));
     }
 
-    public User insert(User obj){
+    public User insert(User obj) {
         return repository.save(obj);
     }
 
     public void delete(Long id) {
         try {
             repository.deleteById(id);
-        }catch (EmptyResultDataAccessException e){
+        } catch (EmptyResultDataAccessException e) {
             e.printStackTrace();
-        }catch (DataIntegrityViolationException e){
+        } catch (DataIntegrityViolationException e) {
             throw new DataBaseException(e.getMessage());
         }
     }
 
-    public User update(Long id, User obj){
-        User entity = repository.getReferenceById(id);
-        updateDate(entity, obj);
-        return repository.save(entity);
+    public User update(Long id, User obj) {
+        try {
+            User entity = repository.getReferenceById(id);
+            updateDate(entity, obj);
+            return repository.save(entity);
+        } catch (EntityNotFoundException e) {
+            throw new ResourceNotFoundException(id);
+        }
     }
 
     private void updateDate(User entity, User obj) {
